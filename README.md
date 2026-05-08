@@ -18,19 +18,13 @@
 - **字段明细** — 每张表的字段名、类型、说明
 - **表关联关系** — 表与表之间的 JOIN 关系
 
-## 安装
+## 安装（一行命令）
 
-### Windows
-```bat
-install.bat
-```
-
-### macOS / Linux / Git Bash
 ```bash
-bash install.sh
+npx datamap-sql-skill
 ```
 
-安装脚本会自动备份旧版本到 `~/.claude/commands/datamap-sql.md.bak.*`。
+自动备份旧版本到 `~/.claude/commands/datamap-sql.md.bak.*`，然后安装最新版。
 
 ## 使用
 

@@ -1,0 +1,14 @@
+{
+  "name": "datamap-sql-skill",
+  "version": "2.0.0",
+  "description": "数据地图SQL自动查数助手 - Claude Code Skill",
+  "bin": {
+    "datamap-sql-install": "./install.js"
+  },
+  "files": [
+    "datamap-sql.md",
+    "install.js"
+  ],
+  "keywords": ["claude-code", "skill", "datamap", "sql"],
+  "license": "MIT"
+}
