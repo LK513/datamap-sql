@@ -1,7 +1,7 @@
 ---
 description: 在数据地图平台自动写SQL查数、导出数据、分析结果
 argument-hint: [SQL查询需求描述]
-allowed-tools: mcp__playwright__browser_navigate, mcp__playwright__browser_evaluate, mcp__playwright__browser_wait_for, mcp__playwright__browser_snapshot, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_click, mcp__playwright__browser_network_requests, mcp__feishu-mcp-pro__bitable_ops, Bash, Read, Write
+allowed-tools: mcp__playwright__browser_navigate, mcp__playwright__browser_evaluate, mcp__playwright__browser_wait_for, mcp__playwright__browser_snapshot, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_click, mcp__playwright__browser_network_requests, mcp__feishu-mcp-pro__bitable_ops, Bash, Read, Write, Agent
 ---
 
 # 数据地图 SQL 自动查数助手
@@ -89,15 +89,40 @@ records: [{"多行文本": "表名", "字段名": "字段名", "字段类型": "
 - `xxx_df` → 业务说明补充"（存量表）"
 - `xxx_di` → 业务说明补充"（增量表）"
 
+## 浏览器初始化（必须先执行）
+
+使用 agent-browser 操作数据地图前，必须确保 Chrome 以 CDP 模式运行。
+
+### 检查并启动 Chrome CDP
+
+```bash
+# 1. 检查 CDP 是否可用
+agent-browser snapshot -i 2>&1 | head -5
+
+# 2. 如果报错 "CDP discovery methods failed"，说明 Chrome 没有 CDP 端口
+#    启动 Chrome（带 CDP 参数）：
+"/c/Program Files/Google/Chrome/Application/chrome.exe" --remote-debugging-port=9222 --user-data-dir="$HOME/.agent-browser/chrome-profile" &
+
+# 3. 等待 3 秒后重试
+sleep 3
+agent-browser snapshot -i
+```
+
+**说明：**
+- 本机 Chrome 快捷方式已配置 `--remote-debugging-port=9222`，从快捷方式启动的 Chrome 自动带 CDP
+- 如果是从命令行或其他方式启动的 Chrome，可能没有 CDP 参数，需要手动启动
+- `--user-data-dir` 使用独立配置文件，避免和日常浏览器冲突
+- 如果想用自己正在用的浏览器（共享登录状态），去掉 `--user-data-dir` 参数
+
 ## 操作流程
 
 ### 第一步：导航到数据地图
 
-```
-browser_navigate → http://datamap.pdt.mixiaojin.srv/#/sql/query?noteId=820
+```bash
+agent-browser open "http://datamap.pdt.mixiaojin.srv/#/sql/query?noteId=820"
 ```
 
-等待页面加载完成（等待 5 秒），确认页面标题为「SQL查询 - 数据地图」。
+等待页面加载完成（等待 5 秒），确认页面标题包含「数据地图」。
 
 ### 第二步：写入 SQL
 
