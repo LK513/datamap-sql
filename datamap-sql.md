@@ -267,6 +267,77 @@ PYEOF
 2. 字段明细：每条字段一行（表名、字段名、类型、说明）
 3. 业务含义（如枚举值：MXJ_result 1=通过，2=拒绝）记录在字段说明中
 
+## 数据上传（大名单批量查询）
+
+当查询 ID 列表超过 2000 个时，无法直接写入 SQL 的 IN 子句，需要先上传到临时表再关联查询。
+
+### 临时表：ods_linshi_ai
+
+- **表结构**：5个 STRING 字段（field_1 ~ field_5）+ dt 分区字段（INT）
+- **位置**：消金数仓（hive）
+- **用途**：存放临时查询名单，用于关联查询
+
+### 上传流程
+
+**步骤1：准备 .xls 文件**
+- 格式：仅支持 `.xls`（Excel 97-2003），不支持 `.xlsx`
+- 列名：必须是 `field_1`, `field_2`, `field_3`, `field_4`, `field_5`（共5列）
+- **不要包含 dt 列**（分区在上传时填写）
+- 长数字（如用户ID）必须作为**字符串**格式，避免科学计数法
+
+```python
+import pandas as pd
+import xlwt
+
+# 读取原始数据
+df = pd.read_excel('原始文件.xlsx', dtype=str)  # dtype=str 保持字符串
+
+# 构造上传文件
+new_df = pd.DataFrame()
+new_df['field_1'] = df['user_id']      # 根据实际列名映射
+new_df['field_2'] = df['contract_id']
+new_df['field_3'] = df['product_id']
+new_df['field_4'] = df['out_id']
+new_df['field_5'] = ''                 # 空字段补齐到5列
+
+# 保存为 .xls
+output_path = 'upload_file.xls'
+workbook = xlwt.Workbook(encoding='utf-8')
+sheet = workbook.add_sheet('Sheet1')
+headers = ['field_1', 'field_2', 'field_3', 'field_4', 'field_5']
+for col, header in enumerate(headers):
+    sheet.write(0, col, header)
+for row_idx, row in new_df.iterrows():
+    for col_idx, value in enumerate(row):
+        sheet.write(row_idx + 1, col_idx, str(value) if pd.notna(value) else '')
+workbook.save(output_path)
+```
+
+**步骤2：上传到数据地图**
+1. 导航到元数据管理 → 数据表管理
+2. 搜索 `ods_linshi_ai`，点击进入
+3. 点击「数据存储」tab
+4. 点击「导入分区数据」按钮
+5. 上传 .xls 文件
+6. 填写分区值：**昨天日期**（如今天 `20260508` → 填 `20260507`）
+7. 点击「确定」
+8. 如果提示分区已有数据，选择「覆盖」
+9. 看到"导入成功"提示即完成
+
+**步骤3：关联查询**
+```sql
+SELECT a.*, b.*
+FROM ods_linshi_ai a
+JOIN other_table b ON a.field_1 = b.user_id
+WHERE a.dt = 20260507  -- 分区值
+```
+
+**注意事项**：
+- field_1 ~ field_5 都是 STRING 类型
+- dt 是 INT 类型，格式 YYYYMMDD
+- 上传后需要等待几秒数据才会生效
+- 用完后建议清理历史分区数据
+
 ## 错误处理
 
 - 如果页面跳转到登录页，提示用户需要先手动登录
