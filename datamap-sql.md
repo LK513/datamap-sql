@@ -222,28 +222,7 @@ const loading = document.querySelector('.ant-spin-spinning');
 return { isLoading: !!loading };
 ```
 
-### 第五步：查看结果条数
-
-**重要：页面只显示前200条（20页×10条），必须先用 COUNT 确认总条数！**
-
-查看总条数：
-```javascript
-// 查看分页信息
-const paginationItems = document.querySelectorAll('.ant-pagination-item');
-let maxPage = 0;
-paginationItems.forEach(item => {
-  const title = parseInt(item.title);
-  if (title > maxPage) maxPage = title;
-});
-return { lastPage: maxPage, estimatedTotal: maxPage * 10 };
-```
-
-**流程：**
-1. 先执行 `SELECT COUNT(*) as total FROM ...` 确认总条数
-2. 如果 > 200 条，使用「异步执行」按钮导出完整数据
-3. 如果 < 200 条，可以直接读取页面数据
-
-### 第五步B：读取页面数据（仅适用于 <200 条的情况）
+### 第五步：读取查询结果
 
 从 Vue 组件的 dataSource 中读取数据：
 
@@ -274,34 +253,7 @@ for (let i = 0; i < 15; i++) {
 
 **注意：** 页面分页显示，dataSource 只包含当前页数据（最多10条）。
 
-### 第六步（可选）：导出结果
-
-如果用户要求下载数据，点击结果区域的下载按钮：
-
-1. 找到当前单元格的 `pannel-wrapper`（通过 CodeMirror 向上查找 `id` 以 `pannel-wrapper-` 开头的元素）
-2. 在该 wrapper 内找到 `.wheader__btns.operation-bar` 中的图标按钮
-3. 下载按钮是**从右数第3个图标**
-4. 点击后出现下拉菜单，选择「导出csv」
-
-```javascript
-// 找到下载图标并点击
-const wrappers = document.querySelectorAll('[id^=pannel-wrapper-]');
-const wrapper = wrappers[wrappers.length - 1];
-const icons = wrapper.querySelectorAll('.wheader__btns.operation-bar .anticon');
-const visibleIcons = Array.from(icons).filter(el => el.getBoundingClientRect().width > 0);
-// 从右数第3个 = index = length - 3
-const downloadBtn = visibleIcons[visibleIcons.length - 3];
-downloadBtn.click();
-
-// 等待下拉菜单出现后，点击"导出csv"
-setTimeout(() => {
-  const dropdown = document.querySelector('.ant-dropdown:not(.ant-dropdown-hidden)');
-  const items = dropdown?.querySelectorAll('.ant-dropdown-menu-item');
-  for (const item of items) {
-    if (item.textContent.trim() === '导出csv') { item.click(); break; }
-  }
-}, 500);
-```
+读取结果后，以清晰的表格形式展示给用户即可。SQL 查询到此结束，不做额外的下载或分析操作。
 
 ## 常用表参考
 
