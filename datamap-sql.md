@@ -95,24 +95,35 @@ records: [{"多行文本": "表名", "字段名": "字段名", "字段类型": "
 
 ### 检查并启动 Chrome CDP
 
+Chrome 147+ 要求 CDP 远程调试必须使用非默认的用户数据目录。解决方案：用 Windows Junction 将默认 profile 链接到另一个路径，Chrome 看到的不是默认目录但数据完全共享（登录状态、Cookie、扩展等）。
+
 ```bash
 # 1. 检查 CDP 是否可用
-agent-browser snapshot -i 2>&1 | head -5
+curl -s http://127.0.0.1:9222/json/version 2>&1
 
-# 2. 如果报错 "CDP discovery methods failed"，说明当前 Chrome 没有 CDP 端口
-#    关闭所有 Chrome 窗口后重新启动（不带 --user-data-dir，使用用户当前浏览器配置）：
-"/c/Program Files/Google/Chrome/Application/chrome.exe" --remote-debugging-port=9222 &
+# 2. 如果连不上，检查 junction 是否已创建
+ls -la "$HOME/.agent-browser/chrome-profile" 2>/dev/null
 
-# 3. 等待 3 秒后重试
-sleep 3
-agent-browser snapshot -i
+# 3. 如果 junction 不存在，先创建（只需执行一次）
+mkdir -p "$HOME/.agent-browser"
+powershell -NoProfile -Command "New-Item -ItemType Junction -Path 'C:\Users\$env:USERNAME\.agent-browser\chrome-profile' -Target 'C:\Users\$env:USERNAME\AppData\Local\Google\Chrome\User Data'"
+
+# 4. 关闭所有 Chrome 后重新启动
+taskkill //F //IM chrome.exe 2>/dev/null
+sleep 2
+"/c/Program Files/Google/Chrome/Application/chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\Users\likai\.agent-browser\chrome-profile" &
+
+# 5. 等待启动完成
+sleep 4
+curl -s http://127.0.0.1:9222/json/version
 ```
 
 **说明：**
-- 不使用 `--user-data-dir`，直接复用用户当前浏览器的 profile（共享登录状态、Cookie、扩展等）
-- 本机 Chrome 快捷方式已配置 `--remote-debugging-port=9222`，从快捷方式启动的 Chrome 自动带 CDP
-- 如果当前 Chrome 已在运行但没有 CDP 端口，需要先关闭所有 Chrome 再用上面命令重启
-- 启动后会在当前浏览器中新开窗口/标签页操作，不会开新的独立实例
+- Junction 方案：Chrome 看到 `~/.agent-browser/chrome-profile`（非默认路径），实际指向 `%LOCALAPPDATA%/Google/Chrome/User Data`（同一份数据）
+- 登录状态、Cookie、扩展、书签等全部共享，无需重新登录
+- 首次使用需创建 Junction（步骤3），之后不需要重复
+- Chrome 启动时会带 CDP 调试端口，skill 可直接连接操作
+- 如果当前 Chrome 已在运行但没有 CDP 端口，需要先关闭所有 Chrome 再重启
 
 ## 操作流程
 
