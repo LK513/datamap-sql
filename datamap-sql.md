@@ -146,6 +146,49 @@ const cm = document.querySelectorAll('.CodeMirror')[0].CodeMirror;
 cm.setValue('YOUR_SQL_HERE');
 ```
 
+**SQL 格式化规则（必须遵守）：**
+
+写入的 SQL 必须格式化，不能写成一坨。规则如下：
+
+1. **每个主要子句换行并左对齐**：`SELECT`、`FROM`、`WHERE`、`JOIN`、`ON`、`GROUP BY`、`ORDER BY`、`LIMIT` 各占一行
+2. **SELECT 字段列表**：超过 3 个字段时，每个字段独占一行，缩进 2 空格
+3. **WHERE 条件**：每个条件独占一行，用缩进对齐，`AND`/`OR` 放在行首
+4. **JOIN**：每个 JOIN 独占一行，`ON` 条件换行缩进
+5. **子查询**：括号内内容缩进 2 空格，右括号独占一行
+6. **关键字大写**：`SELECT`、`FROM`、`WHERE`、`AND`、`OR`、`JOIN`、`LEFT`、`ON`、`GROUP`、`ORDER`、`BY`、`AS`、`COUNT`、`SUM`、`CASE`、`WHEN`、`THEN`、`ELSE`、`END`、`LIMIT`、`HAVING`、`DISTINCT`、`UNION`、`INSERT`、`INTO`、`VALUES`、`UPDATE`、`SET`、`DELETE`
+
+**格式化示例：**
+
+```sql
+SELECT
+  a.user_id,
+  a.contract_id,
+  a.out_id,
+  b.risk_level,
+  c.credit_amount
+FROM
+  ods_loan_contract_record_df a
+  LEFT JOIN ods_mifi_risk_base_di b
+    ON a.user_id = b.user_id
+    AND b.dt = '${date-1}'
+  LEFT JOIN dwd_loan_user_contract_fact_df c
+    ON a.user_id = c.user_id
+    AND c.dt = '${date-1}'
+WHERE
+  a.dt = '${date-1}'
+  AND a.product_id = 'XJ'
+  AND a.status IN ('1', '2')
+GROUP BY
+  a.user_id,
+  a.contract_id,
+  a.out_id,
+  b.risk_level,
+  c.credit_amount
+ORDER BY
+  a.user_id
+LIMIT 100
+```
+
 **注意事项：**
 - 日期变量用 `${date-1}` 表示昨天，`${date}` 表示今天
 - 如果需要写入到已有的编辑器单元格，先找到对应 index 的 CodeMirror
