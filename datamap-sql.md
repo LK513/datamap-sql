@@ -99,9 +99,9 @@ records: [{"多行文本": "表名", "字段名": "字段名", "字段类型": "
 # 1. 检查 CDP 是否可用
 agent-browser snapshot -i 2>&1 | head -5
 
-# 2. 如果报错 "CDP discovery methods failed"，说明 Chrome 没有 CDP 端口
-#    启动 Chrome（带 CDP 参数）：
-"/c/Program Files/Google/Chrome/Application/chrome.exe" --remote-debugging-port=9222 --user-data-dir="$HOME/.agent-browser/chrome-profile" &
+# 2. 如果报错 "CDP discovery methods failed"，说明当前 Chrome 没有 CDP 端口
+#    关闭所有 Chrome 窗口后重新启动（不带 --user-data-dir，使用用户当前浏览器配置）：
+"/c/Program Files/Google/Chrome/Application/chrome.exe" --remote-debugging-port=9222 &
 
 # 3. 等待 3 秒后重试
 sleep 3
@@ -109,10 +109,10 @@ agent-browser snapshot -i
 ```
 
 **说明：**
+- 不使用 `--user-data-dir`，直接复用用户当前浏览器的 profile（共享登录状态、Cookie、扩展等）
 - 本机 Chrome 快捷方式已配置 `--remote-debugging-port=9222`，从快捷方式启动的 Chrome 自动带 CDP
-- 如果是从命令行或其他方式启动的 Chrome，可能没有 CDP 参数，需要手动启动
-- `--user-data-dir` 使用独立配置文件，避免和日常浏览器冲突
-- 如果想用自己正在用的浏览器（共享登录状态），去掉 `--user-data-dir` 参数
+- 如果当前 Chrome 已在运行但没有 CDP 端口，需要先关闭所有 Chrome 再用上面命令重启
+- 启动后会在当前浏览器中新开窗口/标签页操作，不会开新的独立实例
 
 ## 操作流程
 
