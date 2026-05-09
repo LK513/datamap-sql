@@ -129,8 +129,10 @@ curl -s http://127.0.0.1:9222/json/version
 
 ### 第一步：导航到数据地图
 
+使用 CDP 接口在当前浏览器中新开标签页（避免 `agent-browser open` 的 DNS 解析问题）：
+
 ```bash
-agent-browser open "http://datamap.pdt.mixiaojin.srv/#/sql/query?noteId=820"
+curl -s -X PUT "http://127.0.0.1:9222/json/new?http://datamap.pdt.mixiaojin.srv/%23/sql/query?noteId=820"
 ```
 
 等待页面加载完成（等待 5 秒），确认页面标题包含「数据地图」。
