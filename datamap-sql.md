@@ -60,7 +60,7 @@ else
   fi
   taskkill //F //IM chrome.exe 2>/dev/null
   sleep 2
-  "/c/Program Files/Google/Chrome/Application/chrome.exe" --remote-debugging-port=9222 --user-data-dir="$CHROME_PROFILE_JUNCTION" &
+  "/c/Program Files/Google/Chrome/Application/chrome.exe" --remote-debugging-port=9222 --remote-allow-origins=* --user-data-dir="$CHROME_PROFILE_JUNCTION" &
   sleep 4
 fi
 ```
